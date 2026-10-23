@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from project_target import check_project
+from official_metadata import verify_official
 
 ROOT = Path(__file__).resolve().parents[1]
 CFR_COMMIT = "c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a"
@@ -22,9 +23,11 @@ FAILURES = re.compile(r"Decompilation failed|Unable to fully structure code|Coul
 def inspect_jar(path):
     path = Path(path).resolve(strict=True)
     digest = hashlib.sha256()
+    sha1 = hashlib.sha1()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
+            sha1.update(chunk)
     with zipfile.ZipFile(path) as archive:
         info = archive.getinfo("version.json")
         if info.file_size > 1024 * 1024:
@@ -48,7 +51,7 @@ def inspect_jar(path):
         named = any(e.filename == "net/minecraft/client/Minecraft.class" for e in classes)
         return {
             "schema_version": 1, "minecraft_version": version_id,
-            "input_jar": str(path), "sha256": digest.hexdigest(),
+            "input_jar": str(path), "sha256": digest.hexdigest(), "sha1": sha1.hexdigest(),
             "size_bytes": path.stat().st_size, "class_count": len(classes),
             "class_major_versions": sorted(majors),
             "scope": "client" if named else "unverified",
@@ -129,7 +132,7 @@ def scan_failures(directory):
     return [p.relative_to(directory).as_posix() for p in sorted(directory.rglob("*.java")) if FAILURES.search(p.read_text(encoding="utf-8", errors="replace"))]
 
 
-def prepare(path, project=None):
+def prepare(path, project=None, official=False):
     identity = inspect_jar(path)
     if project is not None:
         report = check_project(project, identity)
@@ -139,6 +142,14 @@ def prepare(path, project=None):
         print("Declared Minecraft version matches. Mapping, effective Gradle target, and API compatibility still require review.", file=sys.stderr)
     if not identity["named_client_class_present"]:
         raise ValueError("This baseline requires a named client JAR; obfuscated or other layouts need an explicit mapping workflow")
+    if official:
+        verification = verify_official(identity)
+        if verification["status"] != "verified":
+            raise ValueError("Official JAR verification did not pass (" + verification["status"] + ": " + verification["reason"] + "). Run verify for details; no tool was downloaded or reference created.")
+        identity["official_verification"] = verification
+        identity["provenance"] = "verified_official_client"
+        if "project_check" in identity:
+            identity["project_check"]["jar"]["provenance"] = identity["provenance"]
     check_jdk(max(identity["class_major_versions"]))
     safe_version = re.sub(r"[^A-Za-z0-9._-]", "_", identity["minecraft_version"])[:80]
     output = ROOT / ".local/references" / (safe_version + "-" + identity["sha256"][:12])
@@ -172,23 +183,30 @@ def prepare(path, project=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "check-project", "prepare"))
+    parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare"))
     parser.add_argument("--jar", required=True, type=Path)
     parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project; optional version gate for prepare)")
+    parser.add_argument("--verify-official", action="store_true", help="Require Mojang client fingerprint verification before prepare (requires network)")
     args = parser.parse_args()
+    if args.verify_official and args.command != "prepare":
+        parser.error("--verify-official applies only to prepare; use verify for standalone verification")
     if args.command == "check-project" and args.project is None:
         parser.error("check-project requires --project")
-    if args.command == "inspect" and args.project is not None:
+    if args.command in ("inspect", "verify") and args.project is not None:
         parser.error("--project applies only to check-project or prepare")
     try:
         if args.command == "inspect":
             print(json.dumps(inspect_jar(args.jar), indent=2))
             return 0
+        if args.command == "verify":
+            report = verify_official(inspect_jar(args.jar))
+            print(json.dumps(report, indent=2))
+            return {"verified": 0, "mismatch": 1, "unverified": 2}[report["status"]]
         if args.command == "check-project":
             report = check_project(args.project, inspect_jar(args.jar))
             print(json.dumps(report, indent=2))
             return {"declared_version_match": 0, "version_mismatch": 1, "needs_review": 2}[report["status"]]
-        return prepare(args.jar, args.project)
+        return prepare(args.jar, args.project, args.verify_official)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
         print("Error: " + str(error), file=sys.stderr)
         return 1
