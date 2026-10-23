@@ -12,7 +12,7 @@
 
 - Expand namespace evidence beyond static review gates; full mapping resolution/conversion remains unsupported.
 - Validate further source-generation targets and real-project mismatch cases; 26.2 matching/binding and 1.21.1 rejection are documented in VALIDATION.md.
-- Exercise clean-clone agent setup using only the README instructions and a user-supplied JAR.
+- Evaluate first-use clarity with an independent agent/user when available; the fresh-clone scripted walkthrough is recorded in VALIDATION.md.
 - Compare representative API tasks with and without the kit.
 - Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
 
@@ -51,3 +51,7 @@ A user-supplied Fabric mod targeting 26.2 passed read-only declaration checks an
 ## Namespace review gates
 
 Static mapping evidence now blocks unsupported Yarn/Intermediary/Parchment, multiple hints, unsupported source labels, and known unnamed inputs at project preparation and binding. Resolution rechecks older bindings with the current gates. This is conservative review routing, not proof of compatibility or an automatic mapping converter.
+
+## Fresh-clone setup validation
+
+A public clone with no local cache completed unit tests, project checks, official verification, source preparation, per-class recovery, binding, and resolution against the existing 26.2 input. The target project and tracked clone files were unchanged. The successful isolated test copy was removed while preserving primary inputs and references. See [validation results](VALIDATION.md); this is not an independent agent evaluation.
