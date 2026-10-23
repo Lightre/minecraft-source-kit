@@ -11,6 +11,8 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from project_target import check_project
+
 ROOT = Path(__file__).resolve().parents[1]
 CFR_COMMIT = "c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a"
 CFR_REPO = "https://github.com/leibnitz27/cfr.git"
@@ -127,8 +129,14 @@ def scan_failures(directory):
     return [p.relative_to(directory).as_posix() for p in sorted(directory.rglob("*.java")) if FAILURES.search(p.read_text(encoding="utf-8", errors="replace"))]
 
 
-def prepare(path):
+def prepare(path, project=None):
     identity = inspect_jar(path)
+    if project is not None:
+        report = check_project(project, identity)
+        if report["status"] != "declared_version_match":
+            raise ValueError("Project/JAR check did not pass (" + report["status"] + "). Run check-project for evidence; no tool was downloaded or reference created.")
+        identity["project_check"] = report
+        print("Declared Minecraft version matches. Mapping, effective Gradle target, and API compatibility still require review.", file=sys.stderr)
     if not identity["named_client_class_present"]:
         raise ValueError("This baseline requires a named client JAR; obfuscated or other layouts need an explicit mapping workflow")
     check_jdk(max(identity["class_major_versions"]))
@@ -164,14 +172,23 @@ def prepare(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "prepare"))
+    parser.add_argument("command", choices=("inspect", "check-project", "prepare"))
     parser.add_argument("--jar", required=True, type=Path)
+    parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project; optional version gate for prepare)")
     args = parser.parse_args()
+    if args.command == "check-project" and args.project is None:
+        parser.error("check-project requires --project")
+    if args.command == "inspect" and args.project is not None:
+        parser.error("--project applies only to check-project or prepare")
     try:
         if args.command == "inspect":
             print(json.dumps(inspect_jar(args.jar), indent=2))
             return 0
-        return prepare(args.jar)
+        if args.command == "check-project":
+            report = check_project(args.project, inspect_jar(args.jar))
+            print(json.dumps(report, indent=2))
+            return {"declared_version_match": 0, "version_mismatch": 1, "needs_review": 2}[report["status"]]
+        return prepare(args.jar, args.project)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
         print("Error: " + str(error), file=sys.stderr)
         return 1
