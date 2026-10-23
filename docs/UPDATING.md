@@ -41,7 +41,23 @@ To return to the prior code revision, switch to the tag or commit recorded befor
 
 Tags use `vMAJOR.MINOR.PATCH` and identify fixed release commits; published tags must not be moved. During `0.x` development, minor releases may change commands or local data formats, while patch releases are intended for compatible fixes. Release notes must identify migration requirements. A version string alone does not prove a pristine checkout or broader Minecraft compatibility.
 
-For maintainers: finalize the changelog date, CLI version, support scope, and release notes in a reviewed PR before tagging its merged commit. Publish a matching GitHub Release after required checks complete. Do not include Minecraft inputs, reconstructed sources, or local tool caches.
+For maintainers, prepare each release in a reviewed PR:
+
+- Set `VERSION` in `scripts/mcsource.py`.
+- Add a dated changelog heading exactly as `## vX.Y.Z - YYYY-MM-DD`.
+- Add `docs/releases/vX.Y.Z.md` with the heading `# vX.Y.Z` and nonempty notes.
+
+After the PR is merged and the successful `main` checks finish, update a clean local `main` with `git pull --ff-only`, then validate and tag the merged commit. For example, for v0.1.0:
+
+```text
+python scripts/check_release.py --tag v0.1.0
+git tag -a v0.1.0 -m "Release v0.1.0"
+git push origin v0.1.0
+```
+
+The `release.yml` workflow runs for `v*` tags. It accepts only stable `vMAJOR.MINOR.PATCH` tags, checks the version, date, notes file, and that the tagged commit is on `main`, runs the existing four-job unit-test matrix, then creates a draft GitHub Release from the curated notes file. Review the draft and publish it manually; select Latest manually as appropriate. Never move a tag. If a workflow run fails, inspect it and rerun the same tag workflow after a transient failure; content corrections require a new corrected release tag and version. Do not poll CI from an agent; report the pending run for the user to check. A rerun skips release creation if that release already exists. GitHub's standard source ZIP and tar archives are the only source archives; do not add custom binaries or Minecraft caches.
+
+Do not include Minecraft inputs, reconstructed sources, or local tool caches.
 
 ## Agent update request
 

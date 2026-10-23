@@ -9,5 +9,6 @@ See the [v0.1.0 release notes](docs/releases/v0.1.0.md) for scope and validation
 - Provides provenance checks against Mojang's official client metadata. Verification is explicit and required when `--verify-official` is selected.
 - Uses pinned decompiler tools with integrity checks, with optional conservative recovery for reported CFR failures.
 - Provides project checks and binding resolution for review. Setup and binding do not write to the target mod project.
+- Adds tag-triggered release validation and draft creation after the reusable unit-test matrix passes; publication remains manual.
 - Adds `python scripts/mcsource.py --version` to identify the checked-out kit version. The kit does not update itself.
 - Licenses the kit's original code and documentation under `GPL-3.0-only`.
