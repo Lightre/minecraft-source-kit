@@ -1,0 +1,8 @@
+# Local inputs and generated artifacts
+/work/
+/outputs/
+/.local/
+*.jar
+*.class
+__pycache__/
+*.pyc
