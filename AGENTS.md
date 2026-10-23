@@ -15,4 +15,5 @@ Read `docs/AGENT_GUIDE.md` before setting up or using a Minecraft reference.
 - Do not wait, sleep, poll, schedule follow-ups, or run monitoring loops for external processes such as CI checks, remote builds, deployments, or pending reviews. Finish the authorized work, report what is pending, and yield. Resume when the user reports completion or explicitly requests a status check.
 - This does not replace collecting results from local tests or commands started to validate the current change. Do not add repeated remote status checks to local validation.
 - Use Conventional Commit formatting for both commits and pull request titles, for example `feat: check project Minecraft declarations against input JAR`.
+- The user performs merges manually. After opening or updating a PR, yield for their CI/merge update. Once they confirm a merge, update local `main`; do not merge through tools unless explicitly asked.
 - Prefer squash merging so the final PR title becomes the concise main-branch commit message. Do not claim a merge occurred or that a repository setting is enabled without checking it.

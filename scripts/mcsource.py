@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from project_target import check_project
+from project_binding import bind_project, resolve_project
 from official_metadata import verify_official
 from vineflower_fallback import repair_reference, scan_failures
 
@@ -182,26 +183,37 @@ def prepare(path, project=None, official=False, repair=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare", "repair"))
-    parser.add_argument("--jar", required=True, type=Path)
-    parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project; optional version gate for prepare)")
+    parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare", "repair", "bind", "resolve"))
+    parser.add_argument("--jar", type=Path, help="Input JAR (required except for bind and resolve)")
+    parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project, bind, resolve; optional for prepare)")
     parser.add_argument("--verify-official", action="store_true", help="Require Mojang client fingerprint verification before prepare (requires network)")
     parser.add_argument("--repair", action="store_true", help="Recover reported CFR failures with pinned Vineflower after prepare")
-    parser.add_argument("--reference", type=Path, help="Existing kit-owned reference directory for repair")
+    parser.add_argument("--reference", type=Path, help="Existing kit-owned reference directory for repair or bind")
+    parser.add_argument("--replace-binding", action="store_true", help="Explicitly replace a kit-local project binding after review")
     args = parser.parse_args()
+    if args.command not in ("bind", "resolve") and args.jar is None:
+        parser.error("this command requires --jar")
+    if args.command in ("bind", "resolve") and args.jar is not None:
+        parser.error("bind and resolve use the reference identity, not --jar")
+    if args.replace_binding and args.command != "bind":
+        parser.error("--replace-binding applies only to bind")
     if args.repair and args.command != "prepare":
         parser.error("--repair applies only to prepare")
-    if args.command == "repair" and args.reference is None:
-        parser.error("repair requires --reference")
-    if args.command != "repair" and args.reference is not None:
-        parser.error("--reference applies only to repair")
+    if args.command in ("repair", "bind") and args.reference is None:
+        parser.error("repair and bind require --reference")
+    if args.command not in ("repair", "bind") and args.reference is not None:
+        parser.error("--reference applies only to repair or bind")
     if args.verify_official and args.command != "prepare":
         parser.error("--verify-official applies only to prepare; use verify for standalone verification")
-    if args.command == "check-project" and args.project is None:
-        parser.error("check-project requires --project")
+    if args.command in ("check-project", "bind", "resolve") and args.project is None:
+        parser.error("check-project, bind, and resolve require --project")
     if args.command in ("inspect", "verify", "repair") and args.project is not None:
-        parser.error("--project applies only to check-project or prepare")
+        parser.error("--project applies only to check-project, prepare, bind, or resolve")
     try:
+        if args.command in ("bind", "resolve"):
+            report = bind_project(ROOT, args.project, args.reference, args.replace_binding) if args.command == "bind" else resolve_project(ROOT, args.project)
+            print(json.dumps(report, indent=2))
+            return 0 if report["status"] == "located_unverified" else 2
         if args.command == "inspect":
             print(json.dumps(inspect_jar(args.jar), indent=2))
             return 0

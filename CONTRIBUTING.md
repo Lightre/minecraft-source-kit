@@ -16,3 +16,5 @@ Keep this kit small and focused on version-matched source evidence for coding ag
 Use Conventional Commit formatting for commit messages and PR titles (`feat:`, `fix:`, `docs:`, `test:`, or `chore:` as appropriate). Prefer squash merges with the PR title as the final commit subject.
 
 Coding agents must not monitor external CI or other remote waits in loops. After pushing, report pending checks and yield; the user will report completion. An explicit user request for a status check permits a bounded check, not an ongoing monitor.
+
+The user performs merges manually. Agents prepare and push PRs, then yield. After the user confirms a merge, update local `main`; do not merge through tools without an explicit request.
