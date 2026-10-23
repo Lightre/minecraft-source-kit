@@ -8,7 +8,7 @@ The kit prepares a source reference beside your mod project. It does not edit mo
 
 ## Start here
 
-Requirements: Python 3.10+, Git, and a full JDK capable of reading the input bytecode (`java`, `javac`, `jar`, and `javap`).
+Requirements: Python 3.10+, Git, and a full JDK (9 or newer) capable of reading the input bytecode (`java`, `javac`, `jar`, and `javap`).
 
 1. Clone this kit outside your mod project.
 2. Place your Minecraft client JAR in `.local/inputs/`, or keep it elsewhere and provide its path.
@@ -26,7 +26,7 @@ python scripts/mcsource.py inspect --jar .local/inputs/client.jar
 python scripts/mcsource.py prepare --jar .local/inputs/client.jar
 ```
 
-`inspect` reads ZIP entries and class headers without executing Minecraft. `prepare` fetches a pinned CFR source revision from its official repository, builds it locally, and writes sources under `.local/references/`. Existing outputs are never overwritten. Tools are kept under `.local/tools/`.
+`inspect` reads ZIP entries and class headers without executing Minecraft. `prepare` fetches a pinned CFR source revision from its official repository, builds it locally, and writes sources under `.local/references/`. Existing outputs are never overwritten. Tools are kept under `.local/tools/`. The Java runtime and compiler must have the same major version. The tool checkout is checked against the pinned commit; reused binaries are checked against their locally recorded SHA-256 (this is an integrity check, not independent authentication).
 
 CFR revision: `c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a`. Building requires GitHub access. Minecraft JARs are supplied by the user; the kit does not download them.
 
@@ -43,3 +43,21 @@ Build checks verify compilation; runtime behavior and Mixin application require 
 JARs, generated sources, tool checkouts, and local configuration stay ignored. Only the kit's own code, documentation, and tests belong in this repository. Existing `work/` and `outputs/` directories are local development fixtures, not distributed content.
 
 See [the agent guide](docs/AGENT_GUIDE.md) for setup and coding rules, and [the development plan](docs/ROADMAP.md) for current boundaries.
+
+## Command results
+
+- Exit `0`: inspection succeeded, or sources were generated without known failure markers. Generated sources still require review.
+- Exit `1`: setup or decompilation failed. Read the diagnostic and any partial reference record before trying again.
+- Exit `2`: sources were generated, but CFR reported issues requiring review. This is not a clean source result.
+
+Interrupted or failed output is preserved for diagnosis. Do not delete or overwrite it automatically.
+
+## Development
+
+```text
+python -m unittest discover -s tests -v
+```
+
+Unit tests use small synthetic ZIP fixtures. They do not download Minecraft or decompile it. GitHub Actions runs these tests on Windows and Linux with Python 3.10 and 3.13; passing unit tests does not establish full platform support.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution boundaries.

@@ -3,6 +3,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
@@ -38,6 +39,76 @@ class ReferenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ValueError, "Invalid class"):
                 mcsource.inspect_jar(self.make_jar(Path(temp), header=b"invalid!"))
+
+    def test_metadata_must_be_an_object(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "bad.jar"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("version.json", "[]")
+            with self.assertRaisesRegex(ValueError, "must contain an object"):
+                mcsource.inspect_jar(path)
+
+    def test_missing_metadata_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "bad.jar"
+            with zipfile.ZipFile(path, "w"):
+                pass
+            with self.assertRaises(KeyError):
+                mcsource.inspect_jar(path)
+
+    @patch.object(mcsource.shutil, "which", return_value="tool")
+    @patch.object(mcsource.subprocess, "check_output", return_value='openjdk version "21.0.1"')
+    def test_older_java_is_rejected(self, output, which):
+        with self.assertRaisesRegex(ValueError, r"Java 25\+ is required"):
+            mcsource.check_jdk(69)
+
+    @patch.object(mcsource.shutil, "which", return_value="tool")
+    @patch.object(mcsource.subprocess, "check_output", side_effect=['openjdk version "25.0.1"', 'javac 21.0.1'])
+    def test_mixed_jdk_is_rejected(self, output, which):
+        with self.assertRaisesRegex(ValueError, "same JDK"):
+            mcsource.check_jdk(69)
+
+    def test_existing_reference_is_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            jar = self.make_jar(root)
+            identity = mcsource.inspect_jar(jar)
+            target = root / ".local/references" / ("26.2-" + identity["sha256"][:12])
+            target.mkdir(parents=True)
+            sentinel = target / "keep.txt"
+            sentinel.write_text("preserve")
+            with patch.object(mcsource, "ROOT", root), patch.object(mcsource, "check_jdk"), patch.object(mcsource, "build_cfr") as build:
+                with self.assertRaisesRegex(ValueError, "already exists"):
+                    mcsource.prepare(jar)
+                build.assert_not_called()
+            self.assertEqual(sentinel.read_text(), "preserve")
+
+    def test_prepare_records_cfr_findings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            jar = self.make_jar(root)
+
+            def decompile(args, **kwargs):
+                output = Path(args[args.index("--outputdir") + 1])
+                (output / "Broken.java").write_text('throw new IllegalStateException("Decompilation failed");')
+                (output / "summary.txt").write_text("Summary\n----------------------------\nFailure")
+
+            with patch.object(mcsource, "ROOT", root), patch.object(mcsource, "check_jdk"), patch.object(mcsource, "build_cfr", return_value=root / "tool.jar"), patch.object(mcsource, "run", side_effect=decompile), patch("builtins.print"):
+                self.assertEqual(mcsource.prepare(jar), 2)
+            record = next((root / ".local/references").glob("*/REFERENCE.json"))
+            identity = json.loads(record.read_text())
+            self.assertEqual(identity["status"], "needs_review")
+            self.assertEqual(identity["failure_marker_files"], ["Broken.java"])
+
+    def test_empty_decompiler_result_is_failed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            jar = self.make_jar(root)
+            with patch.object(mcsource, "ROOT", root), patch.object(mcsource, "check_jdk"), patch.object(mcsource, "build_cfr", return_value=root / "tool.jar"), patch.object(mcsource, "run"), patch("builtins.print"):
+                with self.assertRaisesRegex(ValueError, "no Java source"):
+                    mcsource.prepare(jar)
+            record = next((root / ".local/references").glob("*/REFERENCE.json"))
+            self.assertEqual(json.loads(record.read_text())["status"], "failed")
 
     def test_failure_detection(self):
         with tempfile.TemporaryDirectory() as temp:
