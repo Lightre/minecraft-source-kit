@@ -2,13 +2,13 @@
 
 A local, agent-guided workflow for reading the Minecraft version you actually target.
 
-**Status: early development; `v0.1.0` release line.** Check the [upstream Releases page](https://github.com/Lightre/minecraft-source-kit/releases) for available versions; `main` remains the development branch. Current validation covers a local Minecraft 26.2 client JAR on Windows with JDK 25. Read-only target checks and binding were also exercised against a real 26.2 Fabric mod; see [validation results](docs/VALIDATION.md). The 1.21.1 client has negative-path validation only: official verification succeeds, but named-source preparation rejects it. Other versions, mappings, and full preparation on other operating systems are not yet verified.
+**Status: early development; `v0.1.0` release line.** Check the [upstream Releases page](https://github.com/Lightre/minecraft-source-kit/releases) for available versions; `main` remains the development branch. Validation covers standalone source preparation from a local Minecraft 26.1 client JAR and read-only target checks and binding against a real 26.2 Fabric mod on Windows with JDK 25; see [validation results](docs/VALIDATION.md). Only 26.2 has real-mod project validation. The 1.21.1 client has negative-path validation only: official verification succeeds, but named-source preparation rejects it. Other versions, mappings, and full preparation on other operating systems are not yet verified.
 
 The kit prepares a source reference beside your mod project. It does not edit mod code, build files, dependencies, or project instructions during setup. No MCP server, hosted service, or Python packages are required.
 
 ## Input scope
 
-Source preparation currently targets named (unobfuscated) client JARs; full source generation has been validated for 26.2. Mojang's normal Java Edition distribution became unobfuscated with [26.1 Snapshot 1](https://www.minecraft.net/en-us/article/minecraft-26-1-snapshot-1), with 26.1 as the first stable release in that line. This does not imply every newer version has been tested. Earlier obfuscated clients need a remapping workflow that this kit does not implement; successful official fingerprint verification alone does not make them supported source inputs.
+Source preparation currently targets named (unobfuscated) client JARs. Full source generation has been validated for 26.1 and 26.2 on Windows with JDK 25. Project binding and mod/runtime validation remain limited to the documented 26.2 cases. Mojang's normal Java Edition distribution became unobfuscated with [26.1 Snapshot 1](https://www.minecraft.net/en-us/article/minecraft-26-1-snapshot-1), with 26.1 as the first stable release in that line. This does not imply every newer version has been tested. Earlier obfuscated clients need a remapping workflow that this kit does not implement; successful official fingerprint verification alone does not make them supported source inputs.
 
 ## Start here
 
