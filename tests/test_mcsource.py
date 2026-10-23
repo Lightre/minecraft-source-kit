@@ -28,6 +28,7 @@ class ReferenceTests(unittest.TestCase):
             path = self.make_jar(Path(temp))
             result = mcsource.inspect_jar(path)
             self.assertEqual(result["sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
+            self.assertEqual(result["sha1"], hashlib.sha1(path.read_bytes()).hexdigest())
             self.assertEqual(result["class_major_versions"], [69])
             self.assertEqual(result["minecraft_version"], "26.2")
             self.assertEqual(result["namespace"], "unverified")
