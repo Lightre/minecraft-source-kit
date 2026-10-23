@@ -12,7 +12,7 @@
 
 - Expand namespace evidence beyond static review gates; full mapping resolution/conversion remains unsupported.
 - Validate further source-generation targets and real-project mismatch cases; 26.2 matching/binding and 1.21.1 rejection are documented in VALIDATION.md.
-- Evaluate first-use clarity with an independent agent/user when available; the fresh-clone scripted walkthrough is recorded in VALIDATION.md.
+- Expand first-use evaluation across additional tasks and project layouts; the initial new-chat agent setup, feature build, and limited user runtime feedback are recorded in VALIDATION.md.
 - Compare representative API tasks with and without the kit.
 - Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
 
