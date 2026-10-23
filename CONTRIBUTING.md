@@ -9,7 +9,7 @@ Keep this kit small and focused on version-matched source evidence for coding ag
 - Add focused tests for meaningful behavior, and run `python -m unittest discover -s tests -v`.
 - Keep Minecraft JARs, generated sources, downloaded tools, credentials, and machine-specific paths out of commits and issue attachments.
 - Document tested version, mapping, JDK, and operating system when proposing a new supported workflow.
-- Public distribution licensing is not selected yet. Do not describe this repository as licensed open source until a LICENSE is added.
+- Submit original contributions under GPL-3.0-only, the repository license. Preserve existing copyright and license notices. Identify any third-party material and its license before proposing its inclusion; do not assume the kit license covers it.
 
 ## Pull requests
 

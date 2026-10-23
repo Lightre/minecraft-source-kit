@@ -86,3 +86,13 @@ Unit tests use small synthetic ZIP fixtures. They do not download Minecraft or d
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution boundaries.
 
 For the same PR, a new update cancels its older unfinished test run. Feature-branch pushes do not also trigger a duplicate test matrix. Main-branch runs are not canceled in progress.
+
+## License
+
+Copyright (C) 2026 Lightre and contributors.
+
+Minecraft Source Kit's original code, documentation, and configuration are licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms. Contributions are accepted under the same license.
+
+You may use, modify, and redistribute the kit, including commercially, under those terms. Distributing modified versions requires preserving the GPL freedoms and providing corresponding source as required by the license. Private modifications do not have to be published.
+
+Using the kit to inspect or decompile a JAR does not license that JAR, reconstructed sources, or an independent mod project under the GPL. Minecraft materials and external tools retain their own terms. See [third-party notices](THIRD_PARTY_NOTICES.md).
