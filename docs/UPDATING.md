@@ -1,6 +1,6 @@
 # Updating the kit
 
-The first release, `v0.1.0`, is being prepared and is not published yet. Wait until it appears in the [upstream Releases page](https://github.com/Lightre/minecraft-source-kit/releases) before using the release install command below.
+Use only tags listed in the [upstream Releases page](https://github.com/Lightre/minecraft-source-kit/releases) when installing a release. The examples below do not imply that a particular version is available.
 
 ## Install a published release
 
@@ -10,10 +10,10 @@ Clone the kit outside your mod project, then switch to the published tag:
 git clone https://github.com/Lightre/minecraft-source-kit.git
 cd minecraft-source-kit
 git fetch --tags origin
-git switch --detach v0.1.0
+git switch --detach <published-tag>
 ```
 
-Replace `v0.1.0` with another published release tag when choosing a later release. To use current development code instead, clone or update the repository's `main` branch; it may change between releases.
+Replace `<published-tag>` with a tag shown on the upstream Releases page. To use current development code instead, clone or update the repository's `main` branch; it may change between releases.
 
 ## Update an existing checkout
 
@@ -23,8 +23,8 @@ Update inside the existing kit directory. Do not reclone over the kit or delete 
 2. Confirm `git status --short` shows no tracked-file changes. Preserve any other untracked files too; stop if a checkout would overwrite them. Ignored files in `.local` are expected and may remain.
 3. Record the current revision with `git describe --tags --always`.
 4. Fetch tags: `git fetch --tags origin`.
-5. Review the upstream release notes for the chosen, known published tag (for example, `v0.1.0`).
-6. Switch the existing checkout: `git switch --detach v0.1.0`.
+5. Review the upstream release notes for the chosen published tag.
+6. Switch the existing checkout: `git switch --detach <published-tag>`.
 7. Resolve each project binding again before using its reference:
 
    ```text
