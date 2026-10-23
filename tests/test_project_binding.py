@@ -46,7 +46,8 @@ class BindingTests(unittest.TestCase):
         self.assertEqual(report["status"], "located_unverified")
         self.assertTrue(report["review_required"])
         self.assertEqual(report["project_check"]["api_compatibility"], "unverified")
-        self.assertIn(self.reference.as_posix(), report["instruction"])
+        self.assertTrue(Path(report["reference"]).samefile(self.reference))
+        self.assertIn(self.reference.resolve(strict=True).as_posix(), report["instruction"])
 
     def test_missing_binding_does_not_create_directories(self):
         self.assertEqual(self.resolve()["status"], "binding_missing")
