@@ -9,12 +9,13 @@
 5. Run `prepare --jar <jar> --project <mod directory> --verify-official --repair` only after the effective target and namespace have been reviewed. The project option adds a version gate and stores its evidence. Official verification requires matching client SHA-1 and size from Mojang metadata. If verification is unavailable, report the reason and stop; do not silently drop the flag. An explicitly requested offline or modified-JAR workflow may use standalone preparation without the flag, with provenance left unverified. A known fingerprint mismatch must be resolved or explicitly identified as a modified input before proceeding. If the static parser cannot handle a project, explain the limitation and verify the actual target with the agent before using standalone `prepare`; do not bypass an unresolved mismatch. It builds the pinned CFR tool and creates a new output directory without modifying the target project.
 6. Inspect `REFERENCE.json`, the CFR summary, and a few relevant source files. Report incomplete methods. Verify affected behavior against `javap` or a second official decompiler before relying on it. With `--repair`, reported CFR classes receive one conservative Vineflower attempt. Inspect the `fallback` record; `recovered_unverified` is not a correctness guarantee. If unresolved, stop relying on affected methods. For an existing kit reference use `repair --jar <same jar> --reference <directory>`; it checks the original SHA-256. Do not delete attempt records or retry automatically.
 7. Keep diagnostics and original-source backups. Successful recovery removes only its temporary class/output workspace. On failure, preserve it for diagnosis. Do not delete the repository, input JAR, tool cache, or source reference as setup cleanup.
-8. Report the reference's absolute location, version, namespace status, limitations, and setup result. Stop setup here. For future sessions, offer a short source-location instruction that the user can add to their project; do not write it automatically.
+8. For a completed reference without unresolved findings, run `bind --project <mod directory> --reference <reference directory>`. It stores a project/source snapshot only inside the kit. Do not replace an existing binding unless the target has been reviewed and the user's setup/update request covers the refresh.
+9. Report the reference's absolute location, version, namespace status, limitations, and setup result. Offer the generated instruction for future sessions; the user may add it to their project instructions manually. Do not write it automatically.
 
 ## Coding with the reference
 
 - Follow the mod project's instructions. Preparing a reference does not authorize unrelated project changes.
-- Confirm the reference still matches the project's current target before using it.
+- Run `resolve --project <mod directory>` at the start of each session. A `binding_missing` or `stale` result has no usable source instruction: investigate the reasons and repeat setup/review as needed. Never refresh silently to make the warning disappear. `located_unverified` confirms an unchanged local snapshot, not mapping or API correctness. Continue to verify the effective target and source symbols.
 - Search exact symbols, then relevant packages, superclasses, interfaces, and call sites. Read narrowly; do not ingest the whole source tree.
 - Verify package, declaring class, visibility, static/instance status, parameter types, return type, overloads, and generic constraints before introducing an API call.
 - Never invent a replacement name when a symbol is absent. Check mappings, inheritance, inner classes, client/server scope, and the resolved dependency version.
@@ -26,6 +27,6 @@
 
 ## Future-session instruction
 
-The agent may propose this text, replacing placeholders with verified values:
+Prefer the instruction returned by `bind` or `resolve`. It includes the kit and project locations and requires resolution before source use. The following is a manual alternative, replacing placeholders with verified values:
 
 > Minecraft reference: <absolute reference directory>. Read its REFERENCE.json before use. Confirm exact target and namespace compatibility, verify Minecraft symbols from the reference before coding, and report unresolved decompiler failures. Do not modify the reference or include it in the build.

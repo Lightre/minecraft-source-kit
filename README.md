@@ -34,6 +34,15 @@ python scripts/mcsource.py prepare --jar .local/inputs/client.jar --project /pat
 
 `prepare --project` blocks unknown, conflicting, or mismatching declarations before downloading tools or creating an output directory. It records a matching declaration report in the reference identity. This optional version gate does not replace the agent's namespace review. Omitting `--project` keeps standalone source preparation available.
 
+After preparation and source review, create a local project binding:
+
+```text
+python scripts/mcsource.py bind --project /path/to/mod --reference /path/to/kit/.local/references/version-hash
+python scripts/mcsource.py resolve --project /path/to/mod
+```
+
+Bindings stay under the kit's ignored `.local/bindings/`. `resolve` checks the project configuration, reference identity, and active Java source fingerprint before returning a location and a copyable agent instruction. It does not edit the mod project or install instructions into an agent. See [local bindings](docs/PROJECT_BINDINGS.md).
+
 `prepare --repair` adds one conservative recovery attempt for CFR-reported classes using pinned, SHA-256-verified Vineflower 1.12.0. It preserves originals and logs, validates every expected output before replacement, and removes only the successful attempt's temporary workspace. See [source recovery](docs/SOURCE_RECOVERY.md), including recovery of an existing reference.
 
 `inspect` reads ZIP entries and class headers without executing Minecraft. `prepare` fetches a pinned CFR source revision from its official repository, builds it locally, and writes sources under `.local/references/`. Existing outputs are never overwritten. Tools are kept under `.local/tools/`. The Java runtime and compiler must have the same major version. The tool checkout is checked against the pinned commit; reused binaries are checked against their locally recorded SHA-256 (this is an integrity check, not independent authentication).
@@ -56,9 +65,9 @@ See [the agent guide](docs/AGENT_GUIDE.md) for setup and coding rules, and [the 
 
 ## Command results
 
-- Exit `0`: inspection succeeded, the official client fingerprint matches, supported project version declarations match, or sources were generated without known failure markers. A project match and generated sources still require review.
+- Exit `0`: inspection succeeded, the official client fingerprint matches, supported project version declarations match, a binding locates an unchanged reference (`located_unverified`), or sources were generated without known failure markers. A project match and generated sources still require review.
 - Exit `1`: the official client fingerprint or project version declarations mismatch, or setup or decompilation failed. Read the diagnostic and any partial reference record before trying again.
-- Exit `2`: official fingerprint verification was unavailable/inconclusive, the project target could not be established from supported declarations, or sources were generated but CFR reported issues requiring review. Read the JSON status to distinguish these cases.
+- Exit `2`: official fingerprint verification was unavailable/inconclusive, the project target could not be established from supported declarations, or sources were generated but CFR reported issues requiring review. Bindings also return exit `2` for `binding_missing` or `stale`. Read the JSON status to distinguish these cases.
 
 Interrupted or failed output is preserved for diagnosis. Do not delete or overwrite it automatically.
 
