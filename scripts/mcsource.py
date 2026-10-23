@@ -16,6 +16,7 @@ from project_binding import bind_project, resolve_project
 from official_metadata import verify_official
 from vineflower_fallback import repair_reference, scan_failures
 
+VERSION = "0.1.0"
 ROOT = Path(__file__).resolve().parents[1]
 CFR_COMMIT = "c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a"
 CFR_REPO = "https://github.com/leibnitz27/cfr.git"
@@ -183,6 +184,7 @@ def prepare(path, project=None, official=False, repair=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version=f"Minecraft Source Kit {VERSION}")
     parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare", "repair", "bind", "resolve"))
     parser.add_argument("--jar", type=Path, help="Input JAR (required except for bind and resolve)")
     parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project, bind, resolve; optional for prepare)")
