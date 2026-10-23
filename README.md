@@ -8,7 +8,7 @@ The kit prepares a source reference beside your mod project. It does not edit mo
 
 ## Start here
 
-Requirements: Python 3.10+, Git, and a full JDK (9 or newer) capable of reading the input bytecode (`java`, `javac`, `jar`, and `javap`).
+Requirements: Python 3.10+, Git, and a full JDK (9 or newer; 17+ for Vineflower recovery) capable of reading the input bytecode (`java`, `javac`, `jar`, and `javap`).
 
 1. Clone this kit outside your mod project.
 2. Place your Minecraft client JAR in `.local/inputs/`, or keep it elsewhere and provide its path.
@@ -25,7 +25,7 @@ Run these from the kit root; the agent normally runs them for you:
 python scripts/mcsource.py inspect --jar .local/inputs/client.jar
 python scripts/mcsource.py verify --jar .local/inputs/client.jar
 python scripts/mcsource.py check-project --jar .local/inputs/client.jar --project /path/to/mod
-python scripts/mcsource.py prepare --jar .local/inputs/client.jar --project /path/to/mod --verify-official
+python scripts/mcsource.py prepare --jar .local/inputs/client.jar --project /path/to/mod --verify-official --repair
 ```
 
 `verify` compares the local SHA-1 and byte size against Mojang's official client metadata over HTTPS, without downloading Minecraft. It reports `verified`, `mismatch`, or `unverified`; network errors never count as success. `prepare --verify-official` requires a verified result before tool downloads or source generation and stores the verification evidence. See [official verification](docs/OFFICIAL_VERIFICATION.md).
@@ -33,6 +33,8 @@ python scripts/mcsource.py prepare --jar .local/inputs/client.jar --project /pat
 `check-project` compares supported static version declarations with the input JAR and prints evidence as JSON. It never runs Gradle or writes to the mod project. See [project checks](docs/PROJECT_CHECKS.md) for the supported syntax and limitations. A matching declaration is not proof of effective build configuration or API compatibility.
 
 `prepare --project` blocks unknown, conflicting, or mismatching declarations before downloading tools or creating an output directory. It records a matching declaration report in the reference identity. This optional version gate does not replace the agent's namespace review. Omitting `--project` keeps standalone source preparation available.
+
+`prepare --repair` adds one conservative recovery attempt for CFR-reported classes using pinned, SHA-256-verified Vineflower 1.12.0. It preserves originals and logs, validates every expected output before replacement, and removes only the successful attempt's temporary workspace. See [source recovery](docs/SOURCE_RECOVERY.md), including recovery of an existing reference.
 
 `inspect` reads ZIP entries and class headers without executing Minecraft. `prepare` fetches a pinned CFR source revision from its official repository, builds it locally, and writes sources under `.local/references/`. Existing outputs are never overwritten. Tools are kept under `.local/tools/`. The Java runtime and compiler must have the same major version. The tool checkout is checked against the pinned commit; reused binaries are checked against their locally recorded SHA-256 (this is an integrity check, not independent authentication).
 
@@ -42,7 +44,7 @@ CFR revision: `c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a`. Building requires GitH
 
 Matching source and project versions helps prevent invented APIs. Decompiled Java is reconstructed code, not original source. Offline inspection records SHA-256, SHA-1, and failures. Official fingerprint verification is available through `verify` or `prepare --verify-official`; mapping conversion is not implemented. A matching version label alone is insufficient proof of provenance or mapping compatibility.
 
-A successful decompiler exit does not mean every method was recovered. Inspect `REFERENCE.json` and `summary.txt`. CFR may omit method bodies or lack external dependencies. Do not use affected methods as behavioral evidence until checked against bytecode or a second decompiler.
+A successful decompiler exit does not mean every method was recovered. Inspect `REFERENCE.json` and `summary.txt`. CFR may omit method bodies or lack external dependencies. Recovery can remove reported failure markers but is not proof of behavioral equivalence. Inspect affected methods and use bytecode or runtime checks where needed.
 
 Build checks verify compilation; runtime behavior and Mixin application require appropriate in-game validation. No correctness guarantee is made.
 

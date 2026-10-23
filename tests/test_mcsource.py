@@ -114,6 +114,26 @@ class ReferenceTests(unittest.TestCase):
             record = next((root / ".local/references").glob("*/REFERENCE.json"))
             self.assertEqual(json.loads(record.read_text())["status"], "failed")
 
+    def test_prepare_can_invoke_recovery_after_cfr_findings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            jar = self.make_jar(root)
+
+            def decompile(args, **kwargs):
+                output = Path(args[args.index("--outputdir") + 1])
+                (output / "Broken.java").write_text('throw new IllegalStateException("Decompilation failed");')
+
+            with patch.object(mcsource, "ROOT", root), patch.object(mcsource, "check_jdk") as jdk, patch.object(mcsource, "build_cfr", return_value=root / "tool.jar"), patch.object(mcsource, "run", side_effect=decompile), patch.object(mcsource, "repair_reference", return_value={"status": "generated_unverified"}) as repair, patch("builtins.print"):
+                self.assertEqual(mcsource.prepare(jar, repair=True), 0)
+                repair.assert_called_once()
+                self.assertTrue(jdk.call_args.kwargs["minimum"] == 17)
+
+    @patch.object(mcsource.shutil, "which", return_value="tool")
+    @patch.object(mcsource.subprocess, "check_output", return_value='openjdk version "11.0.1"')
+    def test_recovery_requires_java_17_even_for_older_bytecode(self, output, which):
+        with self.assertRaisesRegex(ValueError, r"Java 17\+ is required"):
+            mcsource.check_jdk(52, minimum=17)
+
     def test_failure_detection(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

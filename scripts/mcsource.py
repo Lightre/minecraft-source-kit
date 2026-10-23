@@ -13,11 +13,11 @@ from pathlib import Path
 
 from project_target import check_project
 from official_metadata import verify_official
+from vineflower_fallback import repair_reference, scan_failures
 
 ROOT = Path(__file__).resolve().parents[1]
 CFR_COMMIT = "c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a"
 CFR_REPO = "https://github.com/leibnitz27/cfr.git"
-FAILURES = re.compile(r"Decompilation failed|Unable to fully structure code|Could not decompile|Loose catch block|bad return control flow|ConfusedCFRException", re.I)
 
 
 def inspect_jar(path):
@@ -65,7 +65,7 @@ def run(args, **kwargs):
     return subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
-def check_jdk(required_major):
+def check_jdk(required_major, minimum=9):
     for name in ("java", "javac", "jar", "javap"):
         if not shutil.which(name):
             raise ValueError("Required JDK executable is missing: " + name)
@@ -75,7 +75,7 @@ def check_jdk(required_major):
         raise ValueError("Unable to determine the installed Java version")
     installed = int(match.group(1))
     # The tool packaging command uses the Java 9+ jar CLI.
-    required = max(9, required_major - 44)
+    required = max(minimum, required_major - 44)
     if installed < required:
         raise ValueError(f"Java {required}+ is required; found Java {installed}")
     compiler = subprocess.check_output(["javac", "-version"], stderr=subprocess.STDOUT, text=True)
@@ -128,11 +128,7 @@ def build_cfr():
     return binary
 
 
-def scan_failures(directory):
-    return [p.relative_to(directory).as_posix() for p in sorted(directory.rglob("*.java")) if FAILURES.search(p.read_text(encoding="utf-8", errors="replace"))]
-
-
-def prepare(path, project=None, official=False):
+def prepare(path, project=None, official=False, repair=False):
     identity = inspect_jar(path)
     if project is not None:
         report = check_project(project, identity)
@@ -177,22 +173,33 @@ def prepare(path, project=None, official=False):
         raise
     finally:
         record.write_text(json.dumps(identity, indent=2) + "\n", encoding="utf-8")
+    if repair and identity["status"] == "needs_review":
+        check_jdk(max(identity["class_major_versions"]), minimum=17)
+        identity = repair_reference(ROOT, output, identity)
     print(json.dumps({"reference": str(output), **identity}, indent=2))
     return 2 if identity["status"] == "needs_review" else 0
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare"))
+    parser.add_argument("command", choices=("inspect", "verify", "check-project", "prepare", "repair"))
     parser.add_argument("--jar", required=True, type=Path)
     parser.add_argument("--project", type=Path, help="Mod project directory (required for check-project; optional version gate for prepare)")
     parser.add_argument("--verify-official", action="store_true", help="Require Mojang client fingerprint verification before prepare (requires network)")
+    parser.add_argument("--repair", action="store_true", help="Recover reported CFR failures with pinned Vineflower after prepare")
+    parser.add_argument("--reference", type=Path, help="Existing kit-owned reference directory for repair")
     args = parser.parse_args()
+    if args.repair and args.command != "prepare":
+        parser.error("--repair applies only to prepare")
+    if args.command == "repair" and args.reference is None:
+        parser.error("repair requires --reference")
+    if args.command != "repair" and args.reference is not None:
+        parser.error("--reference applies only to repair")
     if args.verify_official and args.command != "prepare":
         parser.error("--verify-official applies only to prepare; use verify for standalone verification")
     if args.command == "check-project" and args.project is None:
         parser.error("check-project requires --project")
-    if args.command in ("inspect", "verify") and args.project is not None:
+    if args.command in ("inspect", "verify", "repair") and args.project is not None:
         parser.error("--project applies only to check-project or prepare")
     try:
         if args.command == "inspect":
@@ -206,7 +213,13 @@ def main():
             report = check_project(args.project, inspect_jar(args.jar))
             print(json.dumps(report, indent=2))
             return {"declared_version_match": 0, "version_mismatch": 1, "needs_review": 2}[report["status"]]
-        return prepare(args.jar, args.project, args.verify_official)
+        if args.command == "repair":
+            identity = inspect_jar(args.jar)
+            check_jdk(max(identity["class_major_versions"]), minimum=17)
+            report = repair_reference(ROOT, args.reference, identity)
+            print(json.dumps(report, indent=2))
+            return 2 if report["status"] == "needs_review" else 0
+        return prepare(args.jar, args.project, args.verify_official, args.repair)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
         print("Error: " + str(error), file=sys.stderr)
         return 1

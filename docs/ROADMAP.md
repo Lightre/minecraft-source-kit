@@ -10,10 +10,10 @@
 
 ## Next acceptance gates
 
-- Detect CFR failures and add a pinned, verified per-class fallback.
 - Resolve project namespace compatibility and record a reusable local project binding. Matching static version evidence is now stored when preparing with `--project`.
 - Validate source/project mismatch handling with a real mod project.
 - Compare representative API tasks with and without the kit.
+- Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
 
 ## Explicitly deferred
 
@@ -30,3 +30,9 @@ This covers source preparation, not a complete modding workflow. Project binding
 ## Official client verification
 
 The `verify` command and optional `prepare --verify-official` gate compare a local client SHA-1 and size with Mojang metadata. The version metadata SHA-1 is also checked against the official manifest. A live check verified the local 26.2 client; offline fixtures cover mismatches, unavailable metadata, invalid schemas, restricted redirects, and setup blocking. This does not establish mappings or runtime compatibility.
+
+## Per-class recovery
+
+Optional preparation recovery and a standalone repair command use pinned Vineflower 1.12.0 with its published SHA-256. Originals and logs are retained, all candidates are validated before replacement, and temporary workspace removal is limited to successful attempts. A repaired reference remains reconstructed, unverified source. General cache cleanup remains deferred; the repository itself stays installed.
+
+Validation on Windows/JDK 25 recovered all nine reported classes from the local 26.2 client. A separate fixture built from the original CFR backups also recovered all nine with recorded input/original/output hashes and successful workspace cleanup. Unit tests cover conservative rejection, retained diagnostics, rollback, input identity, and tool integrity. The full preparation-with-recovery route is covered with mocked decompiler outputs; it was not rerun against the entire client.
