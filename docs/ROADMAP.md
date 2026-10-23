@@ -11,7 +11,8 @@
 ## Next acceptance gates
 
 - Expand namespace evidence beyond static review gates; full mapping resolution/conversion remains unsupported.
-- Validate additional Minecraft versions and real-project mismatch cases; the 26.2 read-only matching/binding workflow is documented in VALIDATION.md.
+- Validate further source-generation targets and real-project mismatch cases; 26.2 matching/binding and 1.21.1 rejection are documented in VALIDATION.md.
+- Exercise clean-clone agent setup using only the README instructions and a user-supplied JAR.
 - Compare representative API tasks with and without the kit.
 - Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
 
