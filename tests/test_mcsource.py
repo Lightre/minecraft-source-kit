@@ -1,11 +1,14 @@
 import hashlib
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 spec = importlib.util.spec_from_file_location("mcsource", Path(__file__).resolve().parents[1] / "scripts/mcsource.py")
 mcsource = importlib.util.module_from_spec(spec)
