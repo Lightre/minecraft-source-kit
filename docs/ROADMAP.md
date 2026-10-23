@@ -11,7 +11,7 @@
 ## Next acceptance gates
 
 - Resolve project namespace compatibility beyond matching static version declarations and textual mapping hints.
-- Validate source/project mismatch handling with a real mod project.
+- Validate additional Minecraft versions and real-project mismatch cases; the 26.2 read-only matching/binding workflow is documented in VALIDATION.md.
 - Compare representative API tasks with and without the kit.
 - Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
 
@@ -42,3 +42,7 @@ Validation on Windows/JDK 25 recovered all nine reported classes from the local 
 `bind` stores project configuration hashes, reference identity hash, and an active Java source fingerprint under ignored `.local/bindings/`. `resolve` rechecks these before returning a reference and copyable agent instruction. Missing or stale snapshots do not produce a usable instruction. The target mod project is never written. Namespace/API compatibility remains unverified, and bindings do not automatically install agent instructions.
 
 A local smoke check paired the full 7,055-file 26.2 source reference with a synthetic Gradle project. Binding creation and resolution succeeded; changing its declared version produced `stale`. Target files remained unchanged by both commands. This is not real-mod validation or namespace compatibility testing.
+
+## Real-project validation
+
+A user-supplied Fabric mod targeting 26.2 passed read-only declaration checks and temporary binding/resolution against the full reference. Two sampled Minecraft API signatures matched. Project Git state and root configuration hashes were preserved; temporary validation data was cleaned. See [validation results](VALIDATION.md) for scope and limits. No mod build or in-game validation was performed.

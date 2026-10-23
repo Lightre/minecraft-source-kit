@@ -2,7 +2,7 @@
 
 A local, agent-guided workflow for reading the Minecraft version you actually target.
 
-**Status: early development.** Current validation covers a local Minecraft 26.2 client JAR on Windows with JDK 25. Other versions, mappings, and operating systems are not yet verified.
+**Status: early development.** Current validation covers a local Minecraft 26.2 client JAR on Windows with JDK 25. Read-only target checks and binding were also exercised against a real 26.2 Fabric mod; see [validation results](docs/VALIDATION.md). Other versions, mappings, and full preparation on other operating systems are not yet verified.
 
 The kit prepares a source reference beside your mod project. It does not edit mod code, build files, dependencies, or project instructions during setup. No MCP server, hosted service, or Python packages are required.
 
