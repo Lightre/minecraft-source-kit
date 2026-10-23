@@ -65,6 +65,21 @@ After inspecting the successful result, the isolated clone, its tools, generated
 
 This is a scripted walkthrough performed by the current agent, not an independent agent usability evaluation or a performance benchmark. Effective target/namespace review remains a manual step. No mod build, game launch, or API behavior guarantee is implied. Only documentation clarity was adjusted afterward: input scope, optional standalone verification, and temporary validation storage.
 
+## Standalone source preparation: 26.1
+
+Date: 2026-10-24 (Europe/Istanbul). Environment: Windows, Python 3.13.7, Eclipse Temurin JDK 25.0.4.1. Tested checkout revision: `b8ca3fb9855539a96dc1ca567b0cdbcb5587e7b0`, using preparation scripts byte-identical in Git to release `v0.1.0`. The checkout differed from that release only in unrelated release automation and documentation.
+
+The user supplied the official 26.1 client JAR (38,113,398 bytes; SHA-1 `191771837687b766537a8c4607cb6fad79c533a1`; SHA-256 `bc6194c61566b587f196090d730698f2191170f7580adb143e4ff839939d3840`). Offline inspection found 10,682 classes, all with class-file major version 69, in the named client layout. Standalone `prepare --verify-official --repair` (without `--project`) passed official fingerprint verification and generated a source reference. It reused the existing pinned CFR tool at revision `c4145259dfcd8ad3e99004e4d9ecb0aed55dcc5a` and the cached, checksum-pinned Vineflower 1.12.0; CFR was not freshly cloned or built for this run.
+
+- The reference contains 6,882 active Java source files, including 6,596 under `net.minecraft`. Its 33,967,616-byte total includes logs and backups, not only Java sources.
+- Vineflower recovered nine CFR-reported classes, matching the recovery count observed for 26.2. Original backups were retained; the successful recovery workspace was removed.
+- The final status was `generated_unverified`; fallback recovery was `recovered_unverified`. No known failure markers remained, and the recovery record reported no unknown summary findings. Historical findings in the summary were retained.
+- A static sample compared source declarations with `javap` output for `Minecraft.getInstance()`, `Identifier.fromNamespaceAndPath(String, String)`, and `Entity.blockPosition()`. This checks sampled names and signatures only; it does not establish semantic equivalence.
+- `check-project` against an existing 26.2 mod returned `version_mismatch` (exit 1). The real mod was untouched and no binding was created.
+- The three input JAR hashes and the existing 26.2 `REFERENCE.json` hash were unchanged. Other 26.2 source files were not individually fingerprinted. Elapsed time was 491 seconds for this run and is not a benchmark.
+
+This validates standalone 26.1 preparation and one negative project-version check. It does not validate a real 26.1 mod, build, binding, or runtime behavior. No scripts changed and unit tests were not rerun. No raw Minecraft source or machine-specific paths are included here.
+
 ## New-chat walkthrough and user runtime feedback
 
 Date: 2026-10-23. A new-chat agent independently walked through published `v0.1.0` commit `27eb4dac2a067a479ce20faef291c0fc686a031d` on Windows with Python 3.13, JDK 25, local Minecraft 26.2, Fabric API `0.161.0+26.2`, and Fabric Loader `0.20.1`. It used a fresh clone without borrowed caches. Preparation produced 7,055 Java files; Vineflower recovered nine classes. The recovered reference was bound to the project and resolved as `located_unverified`. Setup left tracked mod files unchanged; an ignored IDE workspace changed, with cause unknown, so this evidence does not attribute that change to the kit.
