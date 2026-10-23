@@ -1,8 +1,8 @@
 # Changelog
 
-## v0.1.0 — Unreleased
+## v0.1.0 - 2026-10-23
 
-The first release is being prepared and has not been published.
+See the [v0.1.0 release notes](docs/releases/v0.1.0.md) for scope and validation details.
 
 - Adds a local workflow for preparing and binding Minecraft client source references. Full preparation has been validated for Minecraft 26.2 on Windows with JDK 25; this does not establish support for other versions or platforms.
 - Blocks source preparation for known unnamed clients; the 1.21.1 official client was verified and correctly rejected. Remapping is not implemented.

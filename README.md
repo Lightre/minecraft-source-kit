@@ -2,7 +2,7 @@
 
 A local, agent-guided workflow for reading the Minecraft version you actually target.
 
-**Status: early development; preparing the first `v0.1.0` release.** Current validation covers a local Minecraft 26.2 client JAR on Windows with JDK 25. Read-only target checks and binding were also exercised against a real 26.2 Fabric mod; see [validation results](docs/VALIDATION.md). The 1.21.1 client has negative-path validation only: official verification succeeds, but named-source preparation rejects it. Other versions, mappings, and full preparation on other operating systems are not yet verified.
+**Status: early development; `v0.1.0` release line.** Check the [upstream Releases page](https://github.com/Lightre/minecraft-source-kit/releases) for available versions; `main` remains the development branch. Current validation covers a local Minecraft 26.2 client JAR on Windows with JDK 25. Read-only target checks and binding were also exercised against a real 26.2 Fabric mod; see [validation results](docs/VALIDATION.md). The 1.21.1 client has negative-path validation only: official verification succeeds, but named-source preparation rejects it. Other versions, mappings, and full preparation on other operating systems are not yet verified.
 
 The kit prepares a source reference beside your mod project. It does not edit mod code, build files, dependencies, or project instructions during setup. No MCP server, hosted service, or Python packages are required.
 
@@ -25,7 +25,7 @@ The agent checks the project target, inspects your JAR, prepares the reference, 
 
 Run `python scripts/mcsource.py --version` to print the kit version without inspecting a JAR or downloading tools. The version string identifies the release line; use `git describe --tags --always` to identify the checkout revision during development.
 
-Published releases will use tags such as `v0.1.0` and matching GitHub Releases. Until the first release is published, `main` is a development checkout. Updates are explicit and performed in the existing Git checkout; they do not automatically regenerate sources. Follow [the update guide](docs/UPDATING.md) and review [CHANGELOG.md](CHANGELOG.md).
+Release tags such as `v0.1.0` identify fixed commits and have matching GitHub Releases. Choose an available version from the [Releases page](https://github.com/Lightre/minecraft-source-kit/releases); `main` is a development checkout. Updates are explicit and performed in the existing Git checkout; they do not automatically regenerate sources. Follow [the update guide](docs/UPDATING.md) and review [CHANGELOG.md](CHANGELOG.md).
 
 ## Commands
 
