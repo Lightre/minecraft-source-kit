@@ -23,6 +23,7 @@ def inspect_project(path):
     properties = {}
     versions = []
     mapping_hints = set()
+    mapping_evidence = []
     loader_hints = set()
     files = []
     builds = []
@@ -68,12 +69,15 @@ def inspect_project(path):
             loader_hints.add("neoforge")
         if "net.minecraftforge" in text:
             loader_hints.add("forge")
-        if "officialMojangMappings" in text:
-            mapping_hints.add("mojang")
-        if "net.fabricmc:yarn:" in text:
-            mapping_hints.add("yarn")
-        if "parchment" in text.lower():
-            mapping_hints.add("parchment")
+        for hint, pattern in (
+            ("mojang", r"\bofficialMojangMappings\s*\("),
+            ("yarn", r"net\.fabricmc:yarn:"),
+            ("intermediary", r"net\.fabricmc:intermediary:"),
+            ("parchment", r"org\.parchmentmc(?:\.data)?:|\bparchment\s*\("),
+        ):
+            for match in re.finditer(pattern, text):
+                mapping_hints.add(hint)
+                mapping_evidence.append({"file": name, "line": text.count("\n", 0, match.start()) + 1, "hint": hint})
         for match in COORDINATE.finditer(text):
             dependency_found = True
             quote, coordinate = match.groups()
@@ -99,23 +103,48 @@ def inspect_project(path):
         "project_path": str(root), "configuration_files": files,
         "declared_minecraft_version": exact[0] if len(exact) == 1 and not issues else None,
         "version_candidates": exact, "evidence": evidence, "issues": issues,
-        "mapping_hints": sorted(mapping_hints), "loader_hints": sorted(loader_hints),
+        "mapping_hints": sorted(mapping_hints), "mapping_evidence": mapping_evidence, "loader_hints": sorted(loader_hints),
         "inspection": "static_declarations_only",
+    }
+
+
+def namespace_review(project, identity):
+    """Conservative gates from static hints, never a namespace compatibility proof."""
+    hints = project["mapping_hints"]
+    reasons = []
+    if len(hints) > 1:
+        reasons.append("multiple_mapping_hints_require_review")
+    if any(hint != "mojang" for hint in hints):
+        reasons.append("mapping_transformation_not_supported")
+    if identity.get("namespace", "unverified") not in ("unverified", "mojang"):
+        reasons.append("source_namespace_not_supported")
+    if identity.get("named_client_class_present") is False:
+        reasons.append("named_client_source_not_established")
+    return {
+        "status": "needs_review" if reasons else "unverified",
+        "blocking": bool(reasons), "reasons": reasons,
+        "project_hints": hints, "evidence": project["mapping_evidence"],
+        "source_namespace": identity.get("namespace", "unverified"),
+        "named_client_class_present": identity.get("named_client_class_present"),
     }
 
 
 def check_project(path, jar_identity):
     project = inspect_project(path)
     declared = project["declared_minecraft_version"]
+    namespace = namespace_review(project, jar_identity)
     if declared is None:
         status = "needs_review"
     elif declared != jar_identity["minecraft_version"]:
         status = "version_mismatch"
+    elif namespace["blocking"]:
+        status = "needs_review"
     else:
         status = "declared_version_match"
     return {
         "schema_version": 1, "status": status, "project": project,
         "jar": {key: jar_identity[key] for key in ("minecraft_version", "sha256", "namespace", "provenance", "scope")},
+        "namespace_review": namespace,
         "api_compatibility": "unverified",
         "review_required": True,
         "limitations": [

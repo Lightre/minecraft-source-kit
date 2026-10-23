@@ -113,13 +113,13 @@ def resolve_project(root, project):
     saved_check = binding.get("project_check")
     if not isinstance(saved_check, dict) or saved_check.get("status") != "declared_version_match" or not isinstance(saved_check.get("project"), dict):
         raise ValueError("Binding has no project configuration snapshot")
-    current = inspect_project(project)
-    if current["issues"] or current["declared_minecraft_version"] != saved_check["project"].get("declared_minecraft_version"):
-        reasons.append("project_target_needs_review")
-    if current["configuration_files"] != saved_check["project"].get("configuration_files"):
-        reasons.append("project_configuration_changed")
     try:
         reference, identity, record_hash = read_reference(root, root / binding["reference"])
+        fresh_check = check_project(project, identity)
+        if fresh_check["status"] != "declared_version_match":
+            reasons.append("project_reference_review_required")
+        if fresh_check["project"]["configuration_files"] != saved_check["project"].get("configuration_files"):
+            reasons.append("project_configuration_changed")
         if record_hash != binding.get("reference_identity_sha256"):
             reasons.append("reference_identity_changed")
         elif not reasons and source_snapshot(reference) != binding.get("source_snapshot"):
@@ -129,4 +129,4 @@ def resolve_project(root, project):
         reference = None
     if reasons:
         return {"status": "stale", "project_path": str(project), "reasons": reasons, "review_required": True}
-    return {"status": "located_unverified", "binding_file": str(target), "reference": str(reference), "project_check": saved_check, "review_required": True, "instruction": instruction(root, project, reference)}
+    return {"status": "located_unverified", "binding_file": str(target), "reference": str(reference), "project_check": fresh_check, "review_required": True, "instruction": instruction(root, project, reference)}

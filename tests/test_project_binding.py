@@ -161,6 +161,28 @@ class BindingTests(unittest.TestCase):
                 self.bind()
         self.assertFalse((self.kit / ".local/bindings").exists())
 
+    def test_mapping_review_blocks_binding_without_writing(self):
+        with (self.project / "build.gradle").open("a") as stream:
+            stream.write('\nmappings "net.fabricmc:yarn:26.2+build.1:v2"\n')
+        with self.assertRaisesRegex(ValueError, "matching supported"):
+            self.bind()
+        self.assertFalse((self.kit / ".local/bindings").exists())
+
+    def test_legacy_binding_is_rechecked_against_current_mapping_gates(self):
+        first = self.bind()
+        with (self.project / "build.gradle").open("a") as stream:
+            stream.write('\nmappings "net.fabricmc:yarn:26.2+build.1:v2"\n')
+        target = Path(first["binding_file"])
+        legacy = json.loads(target.read_text())
+        # Simulate an earlier kit accepting the same unchanged Yarn configuration.
+        legacy["project_check"]["project"] = binding.inspect_project(self.project)
+        target.write_text(json.dumps(legacy), encoding="utf-8")
+        report = self.resolve()
+        self.assertEqual(report["status"], "stale")
+        self.assertIn("project_reference_review_required", report["reasons"])
+        self.assertNotIn("project_configuration_changed", report["reasons"])
+        self.assertNotIn("instruction", report)
+
     def test_cli_resolve_missing_binding(self):
         result = subprocess.run([sys.executable, str(SCRIPTS / "mcsource.py"), "resolve", "--project", str(self.project)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 2)
