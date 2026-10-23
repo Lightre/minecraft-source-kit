@@ -47,3 +47,20 @@ Date: 2026-10-23. Environment: Windows; user-supplied client JAR, no game or Gra
 The temporary project was removed. Before/after inventories confirmed no new tool, reference, or binding entries, and both user-supplied JARs were preserved. No raw Minecraft content or local paths are distributed.
 
 This is negative-path validation, not legacy source-generation support. The kit does not remap the 1.21.1 input and must not advertise it as a supported named source reference. Clean-clone agent setup, additional project layouts, and effective namespace resolution remain separate acceptance gates.
+
+## Fresh public clone walkthrough
+
+Date: 2026-10-23. Environment: Windows, Python 3.13, JDK 25. Tested public commit: `2b6020686b273ecc115e5826c4b19e31b310bfef`.
+
+An isolated public clone started without `.local/`, downloaded no Minecraft binary, and used the existing user-supplied 26.2 JAR by path. The walkthrough followed the README/agent guide against the previously reviewed real Fabric project without copying primary-kit tools or references.
+
+- All 98 unit tests passed in the clean clone.
+- Project declaration checks returned `declared_version_match`; namespace/API compatibility remained unverified.
+- `prepare --project ... --verify-official --repair` fetched and built pinned CFR, verified the official client fingerprint, produced 7,055 Java files, and downloaded checksum-pinned Vineflower to recover the nine reported classes.
+- The reference finished as `generated_unverified`, with official verification recorded, `fallback.status = recovered_unverified`, and the successful recovery workspace removed.
+- `bind` and `resolve` returned `located_unverified` using only that clone's new reference and binding.
+- Project Git state and hashes of the inspected configuration files were unchanged. The clean clone's tracked files also remained unchanged.
+
+After inspecting the successful result, the isolated clone, its tools, generated reference, binding, and logs were removed as explicitly temporary validation data. Windows read-only Git pack files required forced deletion limited to the verified temporary directory. Before/after fingerprints confirmed preservation of both primary user JARs and the primary reference identity; the primary tool cache was retained. This cleanup is not the normal setup behavior for an active kit.
+
+This is a scripted walkthrough performed by the current agent, not an independent agent usability evaluation or a performance benchmark. Effective target/namespace review remains a manual step. No mod build, game launch, or API behavior guarantee is implied. Only documentation clarity was adjusted afterward: input scope, optional standalone verification, and temporary validation storage.

@@ -6,6 +6,10 @@ A local, agent-guided workflow for reading the Minecraft version you actually ta
 
 The kit prepares a source reference beside your mod project. It does not edit mod code, build files, dependencies, or project instructions during setup. No MCP server, hosted service, or Python packages are required.
 
+## Input scope
+
+Source preparation currently targets named (unobfuscated) client JARs; full source generation has been validated for 26.2. Mojang's normal Java Edition distribution became unobfuscated with [26.1 Snapshot 1](https://www.minecraft.net/en-us/article/minecraft-26-1-snapshot-1), with 26.1 as the first stable release in that line. This does not imply every newer version has been tested. Earlier obfuscated clients need a remapping workflow that this kit does not implement; successful official fingerprint verification alone does not make them supported source inputs.
+
 ## Start here
 
 Requirements: Python 3.10+, Git, and a full JDK (9 or newer; 17+ for Vineflower recovery) capable of reading the input bytecode (`java`, `javac`, `jar`, and `javap`).
@@ -19,7 +23,7 @@ The agent checks the project target, inspects your JAR, prepares the reference, 
 
 ## Commands
 
-Run these from the kit root; the agent normally runs them for you:
+Run commands from the kit root; the agent chooses the needed steps. `prepare --verify-official` already verifies the input, so a separate `verify` call is only needed for standalone diagnostics:
 
 ```text
 python scripts/mcsource.py inspect --jar .local/inputs/client.jar
@@ -59,7 +63,7 @@ Build checks verify compilation; runtime behavior and Mixin application require 
 
 ## Repository hygiene
 
-JARs, generated sources, tool checkouts, and local configuration stay ignored. Only the kit's own code, documentation, and tests belong in this repository. Existing `work/` and `outputs/` directories are local development fixtures, not distributed content.
+JARs, generated sources, tool checkouts, and local configuration stay ignored. Only the kit's own code, documentation, and tests belong in this repository. Keep validation clones and temporary fixtures inside ignored local storage; remove successful test copies after verifying their results.
 
 See [the agent guide](docs/AGENT_GUIDE.md) for setup and coding rules, and [the development plan](docs/ROADMAP.md) for current boundaries.
 
