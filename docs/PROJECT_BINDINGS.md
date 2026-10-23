@@ -11,7 +11,7 @@ Quote paths containing spaces. Neither command requires the original JAR, Java, 
 
 ## Creating a binding
 
-The reference must be inside this kit's `.local/references/`, have a valid completed identity (`generated_unverified`), contain the recorded number of Java files, and have no known source failure markers. Unresolved/failed references and marked validation fixtures cannot be bound. Supported project version declarations must match the reference version; unsupported builds still need a supported resolution workflow rather than a guessed binding.
+The reference must be inside this kit's `.local/references/`, have a valid completed identity (`generated_unverified`), contain the recorded number of Java files, and have no known source failure markers. Unresolved/failed references and marked validation fixtures cannot be bound. Supported project version declarations must match the reference version and pass the namespace review gates; unsupported builds still need a supported resolution workflow rather than a guessed binding.
 
 A file under `.local/bindings/` is keyed by the canonical project path. It stores:
 
@@ -31,7 +31,7 @@ The snapshot detects changes after binding. It does not authenticate sources aga
 - `stale` (exit 2): inspected configuration, source identity, or active sources changed or became unavailable. The result includes reasons and deliberately omits the source-use instruction.
 - Invalid inputs or malformed binding files produce a diagnostic and exit 1.
 
-`resolve` is read-only. It never repairs, rebinds, downloads, runs builds, or substitutes another source version. Its configuration scope is the same bounded root-file inspection documented in PROJECT_CHECKS.md. External Gradle overrides are not detected. Changes to the kit's own parser may also require review.
+`resolve` is read-only. It never repairs, rebinds, downloads, runs builds, or substitutes another source version. Its configuration scope is the same bounded root-file inspection documented in PROJECT_CHECKS.md. Current project/reference checks, including namespace review gates, are re-run even for older bindings. External Gradle overrides are not detected. Changes to the kit's own parser may also require review.
 
 A coding agent still needs to know where this kit is. Bindings do not register themselves with Codex or other agents, and do not make external instructions load automatically. Give the agent the kit path, or manually add the returned instruction to the mod project's existing instructions. The kit does not write that instruction for you.
 

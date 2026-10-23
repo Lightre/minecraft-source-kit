@@ -108,6 +108,78 @@ class ProjectTargetTests(unittest.TestCase):
         self.assertIn("yarn", report["project"]["mapping_hints"])
         self.assertEqual(report["api_compatibility"], "unverified")
 
+    def test_yarn_declaration_blocks_same_version_preparation(self):
+        self.write_project()
+        build = self.project / "build.gradle"
+        build.write_text(build.read_text().replace("mappings loom.officialMojangMappings()", 'mappings "net.fabricmc:yarn:26.2+build.1:v2"'))
+        report = self.report()
+        self.assertEqual(report["status"], "needs_review")
+        self.assertTrue(report["namespace_review"]["blocking"])
+        self.assertEqual(report["namespace_review"]["evidence"][0], {"file": "build.gradle", "line": 4, "hint": "yarn"})
+        with patch.object(mcsource, "ROOT", self.root), patch.object(mcsource, "build_cfr") as build_tool, patch.object(mcsource, "verify_official") as verify:
+            with self.assertRaisesRegex(ValueError, "needs_review"):
+                mcsource.prepare(self.jar, self.project, official=True)
+            build_tool.assert_not_called()
+            verify.assert_not_called()
+        self.assertFalse((self.root / ".local").exists())
+
+    def test_multiple_mapping_hints_are_not_an_automatic_match(self):
+        self.write_project()
+        with (self.project / "build.gradle").open("a") as stream:
+            stream.write('\nmappings "net.fabricmc:yarn:26.2+build.1:v2"\n')
+        report = self.report()
+        self.assertEqual(report["status"], "needs_review")
+        self.assertIn("multiple_mapping_hints_require_review", report["namespace_review"]["reasons"])
+
+    def test_intermediary_and_parchment_require_review(self):
+        for coordinate in ("net.fabricmc:intermediary:26.2", "org.parchmentmc.data:parchment-26.2:2026.10.01@zip"):
+            with self.subTest(coordinate=coordinate):
+                self.write_project()
+                build = self.project / "build.gradle"
+                build.write_text(build.read_text().replace("mappings loom.officialMojangMappings()", 'mappings "' + coordinate + '"'))
+                self.assertEqual(self.report()["status"], "needs_review")
+
+    def test_commented_mappings_do_not_trigger_review(self):
+        self.write_project()
+        with (self.project / "build.gradle").open("a") as stream:
+            stream.write('\n// mappings "net.fabricmc:yarn:26.2:v2"\n/* parchment("example") */\n')
+        self.assertEqual(self.report()["status"], "declared_version_match")
+
+    def test_repository_mention_is_not_a_parchment_mapping(self):
+        self.write_project()
+        with (self.project / "build.gradle").open("a") as stream:
+            stream.write('\nrepositories { maven { url "https://maven.parchmentmc.org" } }\n')
+        self.assertEqual(self.report()["project"]["mapping_hints"], ["mojang"])
+
+    def test_absent_mapping_declaration_remains_unverified(self):
+        self.write_project()
+        build = self.project / "build.gradle"
+        build.write_text(build.read_text().replace("mappings loom.officialMojangMappings()", ""))
+        report = self.report()
+        self.assertEqual(report["status"], "declared_version_match")
+        self.assertEqual(report["namespace_review"]["status"], "unverified")
+        self.assertEqual(report["namespace_review"]["project_hints"], [])
+        self.assertEqual(report["api_compatibility"], "unverified")
+
+    def test_unnamed_input_requires_review(self):
+        self.write_project()
+        self.identity["named_client_class_present"] = False
+        report = self.report()
+        self.assertEqual(report["status"], "needs_review")
+        self.assertIn("named_client_source_not_established", report["namespace_review"]["reasons"])
+
+    def test_unsupported_source_namespace_requires_review(self):
+        self.write_project()
+        self.identity["namespace"] = "yarn"
+        self.assertEqual(self.report()["status"], "needs_review")
+
+    def test_version_mismatch_stays_visible_with_mapping_warnings(self):
+        self.write_project(version="26.1")
+        self.identity["namespace"] = "yarn"
+        report = self.report()
+        self.assertEqual(report["status"], "version_mismatch")
+        self.assertTrue(report["namespace_review"]["blocking"])
+
     def test_project_tree_is_unchanged(self):
         self.write_project()
         before = {p.relative_to(self.project): hashlib.sha256(p.read_bytes()).hexdigest() for p in self.project.rglob("*") if p.is_file()}

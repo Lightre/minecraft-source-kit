@@ -30,7 +30,7 @@ python scripts/mcsource.py prepare --jar .local/inputs/client.jar --project /pat
 
 `verify` compares the local SHA-1 and byte size against Mojang's official client metadata over HTTPS, without downloading Minecraft. It reports `verified`, `mismatch`, or `unverified`; network errors never count as success. `prepare --verify-official` requires a verified result before tool downloads or source generation and stores the verification evidence. See [official verification](docs/OFFICIAL_VERIFICATION.md).
 
-`check-project` compares supported static version declarations with the input JAR and prints evidence as JSON. It never runs Gradle or writes to the mod project. See [project checks](docs/PROJECT_CHECKS.md) for the supported syntax and limitations. A matching declaration is not proof of effective build configuration or API compatibility.
+`check-project` compares supported static version declarations with the input JAR and prints evidence as JSON. It never runs Gradle or writes to the mod project. See [project checks](docs/PROJECT_CHECKS.md) for the supported syntax and limitations. Mapping hints and their file/line evidence appear under `namespace_review`. Unsupported or multiple mapping hints require review and block project preparation/binding. A matching declaration is not proof of effective build configuration or API compatibility.
 
 `prepare --project` blocks unknown, conflicting, or mismatching declarations before downloading tools or creating an output directory. It records a matching declaration report in the reference identity. This optional version gate does not replace the agent's namespace review. Omitting `--project` keeps standalone source preparation available.
 

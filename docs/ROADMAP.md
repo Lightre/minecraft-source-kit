@@ -10,7 +10,7 @@
 
 ## Next acceptance gates
 
-- Resolve project namespace compatibility beyond matching static version declarations and textual mapping hints.
+- Expand namespace evidence beyond static review gates; full mapping resolution/conversion remains unsupported.
 - Validate additional Minecraft versions and real-project mismatch cases; the 26.2 read-only matching/binding workflow is documented in VALIDATION.md.
 - Compare representative API tasks with and without the kit.
 - Add preview-based, user-requested cache cleanup after the preparation workflow stabilizes; never remove active references or user inputs implicitly.
@@ -46,3 +46,7 @@ A local smoke check paired the full 7,055-file 26.2 source reference with a synt
 ## Real-project validation
 
 A user-supplied Fabric mod targeting 26.2 passed read-only declaration checks and temporary binding/resolution against the full reference. Two sampled Minecraft API signatures matched. Project Git state and root configuration hashes were preserved; temporary validation data was cleaned. See [validation results](VALIDATION.md) for scope and limits. No mod build or in-game validation was performed.
+
+## Namespace review gates
+
+Static mapping evidence now blocks unsupported Yarn/Intermediary/Parchment, multiple hints, unsupported source labels, and known unnamed inputs at project preparation and binding. Resolution rechecks older bindings with the current gates. This is conservative review routing, not proof of compatibility or an automatic mapping converter.

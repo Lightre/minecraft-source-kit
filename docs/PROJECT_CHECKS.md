@@ -22,7 +22,7 @@ Duplicate properties, conflicting versions, version ranges, unresolved expressio
 
 - `declared_version_match` (exit 0): supported declarations agree with the JAR's version label. This is not an API compatibility approval.
 - `version_mismatch` (exit 1): the supported unambiguous declarations name another version. Stop setup with this JAR.
-- `needs_review` (exit 2): the static checker cannot establish a single target. Read `issues` and resolve the actual configuration before proceeding.
+- `needs_review` (exit 2): the static checker cannot establish a single target, or namespace review gates block use. Read project `issues` and `namespace_review.reasons`, then resolve the actual configuration before proceeding.
 - Invalid input produces an error diagnostic and exit 1.
 
 The JSON report includes the source file and line for version declarations, configuration file SHA-256 values, and mapping/loader hints. Values are not inferred from installed caches or remembered version conventions. Only relevant declaration evidence is included, not complete build files.
@@ -38,3 +38,16 @@ The JAR's namespace and provenance remain unverified by this command. A version 
 ## Validation boundary
 
 Automated coverage uses small synthetic mod configurations and JARs. An integration smoke check used the local 26.2 JAR with matching 26.2 and mismatching 26.1 synthetic mod configurations; both statuses and project-file preservation were verified. This does not establish support for a real user's entire Gradle build. Real-project validation remains an acceptance gate.
+
+## Namespace review gates
+
+The report now includes `namespace_review` with static mapping hints, file/line evidence, source labels, reasons, and a `blocking` flag. No positive namespace-compatibility result is produced.
+
+- Yarn, Intermediary, and Parchment hints require review because this kit does not perform the required mapping transformations.
+- Multiple mapping hints require review. This may describe a legitimate layered configuration; it is not automatically diagnosed as a broken build.
+- Explicit unsupported source namespace labels or a known absence of the expected named client class also require review.
+- A version mismatch remains `version_mismatch` even when namespace warnings are present. Otherwise blocking namespace reasons produce `needs_review` (exit 2).
+
+`prepare --project` and `bind` stop on that result before generating sources or writing bindings. `resolve` re-runs the current checks even for bindings created by an earlier kit; blocked old bindings become `stale` without a source-use instruction.
+
+An official Mojang mapping hint or absence of explicit mappings does not establish compatibility: the namespace result remains `unverified`. The checker is bounded static analysis; unrecognized custom mappings, plugins, catalogs, or external overrides may not produce a hint. An agent must still inspect the effective configuration. Ordinary comments and Parchment repository URLs alone are not mapping declarations. Do not bypass mapping warnings by omitting `--project` or editing a binding by hand.
