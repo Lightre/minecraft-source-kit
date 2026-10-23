@@ -1,4 +1,4 @@
-# Read-only real-project validation
+# Validation results
 
 Date: 2026-10-23. Environment: Windows, local Minecraft 26.2 client reference.
 
@@ -28,8 +28,22 @@ This confirms those sampled names and signatures, not all APIs, loader behavior,
 
 The temporary real-project binding was removed immediately after the check. Earlier synthetic validation workspaces, their local binding, and the marked nine-class recovery fixture were also removed. The user-supplied JAR, full source reference, original recovery diagnostics, and tool cache were preserved. No persistent binding or instruction was installed in the real mod project.
 
-## Limits
+## Limits of the 26.2 project exercise
 
-This is read-only workflow validation, not a successful mod build, in-game test, or automated proof of namespace compatibility. The effective Gradle configuration can still depend on external overrides. Official JAR provenance was not rechecked during this step; binding checks use the existing source identity and local snapshots.
+This is read-only workflow validation, not a successful mod build, in-game test, or automated proof of namespace compatibility. The effective Gradle configuration can still depend on external overrides. Official JAR provenance was not rechecked during that 26.2 project step; binding checks use the existing source identity and local snapshots.
 
 A controlled before/after comparison of agent task performance remains untested. Further Minecraft versions and project layouts require separate validation.
+
+## Legacy client rejection: 1.21.1
+
+Date: 2026-10-23. Environment: Windows; user-supplied client JAR, no game or Gradle execution.
+
+- Offline inspection found version 1.21.1, 8,269 class files, class major 65 (Java 21), and no expected `net/minecraft/client/Minecraft.class` name. Source namespace and scope remained unverified by offline inspection.
+- Live `verify` succeeded against Mojang client metadata: SHA-1 `30c73b1c5da787909b2f73340419fdf13b9def88`, size 26,836,906 bytes.
+- `prepare --verify-official --repair` rejected the unsupported named-client layout with exit 1 before tool acquisition or reference generation. Standalone verification was performed separately; rejected preparation did not need a metadata request.
+- With a temporary synthetic project declaring 1.21.1, `check-project` returned `needs_review` (exit 2), including `named_client_source_not_established`.
+- With that temporary project's declaration changed to 26.2, the same input returned `version_mismatch` (exit 1), retaining the namespace review reason.
+
+The temporary project was removed. Before/after inventories confirmed no new tool, reference, or binding entries, and both user-supplied JARs were preserved. No raw Minecraft content or local paths are distributed.
+
+This is negative-path validation, not legacy source-generation support. The kit does not remap the 1.21.1 input and must not advertise it as a supported named source reference. Clean-clone agent setup, additional project layouts, and effective namespace resolution remain separate acceptance gates.
